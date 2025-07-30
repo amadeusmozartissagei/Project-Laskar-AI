@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
 # Konfigurasi halaman
 st.set_page_config(
@@ -16,7 +17,27 @@ st.markdown("Analisis Data Bike Sharing di Washington DC (2011–2012)")
 # Load dataset
 @st.cache_data
 def load_data():
-    df = pd.read_csv("day.csv")
+    # Try different possible paths for the CSV file
+    possible_paths = [
+        "day.csv",
+        "../day.csv",
+        "data/day.csv",
+        "dashboard/day.csv"
+    ]
+    
+    df = None
+    for path in possible_paths:
+        try:
+            if os.path.exists(path):
+                df = pd.read_csv(path)
+                st.success(f"✅ Data loaded from: {path}")
+                break
+        except Exception as e:
+            continue
+    
+    if df is None:
+        st.error("❌ Could not find day.csv file. Please check the file path.")
+        return None
     df['dteday'] = pd.to_datetime(df['dteday'])
 
     season_map = {1: 'Spring', 2: 'Summer', 3: 'Fall', 4: 'Winter'}
@@ -33,6 +54,9 @@ def load_data():
     return df
 
 df = load_data()
+
+if df is None:
+    st.stop()
 
 # Sidebar filter
 st.sidebar.header("🔎 Filter Data")
